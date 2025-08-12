@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生日抽奖</title>
+  <!-- 外部资源CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.15.1/dist/framer-motion.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sonner@1.0.3/dist/sonner.umd.min.js"></script>
+  
+  <!-- Tailwind配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#f1c40f',
+            secondary: '#e84393',
+            accent: '#3498db',
+            dark: '#1a2a3a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义样式 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .bg-glass {
+        backdrop-filter: blur(8px);
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#d6eaf8] min-h-screen font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // 类型定义
+    const Prize = {
+      id: 0,
+      name: '',
+      description: '',
+      image: '',
+      rarity: ''
+    };
+    
+    // 奖品数据
+    const prizes = [
+      {
+        id: 1,
+        name: '凝光之驻',
+        description: '愿它如凝固的星光，守护你所在的一方天地',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'common'
+      },
+      {
+        id: 2,
+        name: '隙间辰砂',
+        description: '钥匙开启门隙，愿其中藏有星辰般的机遇',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'common'
+      },
+      {
+        id: 3,
+        name: '甜梦摇篮',
+        description: '晃动间坠入柔软梦境，愿琐碎烦恼皆被摇散',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'common'
+      },
+      {
+        id: 4,
+        name: '心绪拓片',
+        description: '将此刻心情拓印留存，愿斑斓痕迹拼出未来图景',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'common'
+      },
+      {
+        id: 5,
+        name: '时光行囊',
+        description: '背负轻风与故事前行，愿沿途皆可盛放自由',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'uncommon'
+      },
+      {
+        id: 6,
+        name: '远驿诗笺',
+        description: '方寸纸页载满未言之意，愿思念终抵繁星彼端',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'uncommon'
+      },
+      {
+        id: 7,
+        name: '星屑标本',
+        description: '将生活微光磁吸珍藏，愿烟火日常亦有银河',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'rare'
+      },
+      {
+        id: 8,
+        name: '灵痕引信',
+        description: '按启思绪的星火，愿每一笔皆点燃灵感',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'rare'
+      },
+      {
+        id: 9,
+        name: '浮世织幕',
+        description: '垂落成墙上的温柔幕布，愿喧嚣在此静默成画',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'epic'
+      },
+      {
+        id: 10,
+        name: '流光蝶翼',
+        description: '轻夹住易逝的流光，愿重要瞬间如蝶栖落掌心',
+        image: 'https://lf-code-agent.coze.cn/obj/x-ai-cn/259037092354/attachment/1111_20250812143332.jpg',
+        rarity: 'epic'
+      }
+    ];
+    
+    // 根据稀有度获取颜色
+    const getRarityColor = (rarity) => {
+      switch (rarity) {
+        case 'common': return 'bg-[#e84393]/20 text-[#e84393]';
+        case 'uncommon': return 'bg-[#2ecc71]/20 text-[#2ecc71]';
+        case 'rare': return 'bg-[#3498db]/20 text-[#3498db]';
+        case 'epic': return 'bg-[#9b59b6]/20 text-[#9b59b6]';
+        case 'legendary': return 'bg-[#f1c40f]/20 text-[#f1c40f]';
+        default: return 'bg-gray-200 text-gray-800';
+      }
+    };
+    
+    // 抽奖组件
+    const Lottery = () => {
+      const [isSpinning, setIsSpinning] = React.useState(false);
+      const [selectedPrize, setSelectedPrize] = React.useState(null);
+      const [wonPrizes, setWonPrizes] = React.useState([]);
+      const [showPrize, setShowPrize] = React.useState(false);
+      const [confetti, setConfetti] = React.useState([]);
+      const { toast } = sonner;
+      const { motion, AnimatePresence } = framerMotion;
+      
+      // 创建庆祝彩屑效果
+      React.useEffect(() => {
+        if (showPrize) {
+          const newConfetti = Array.from({length: 50}, () => ({
+            x: Math.random() * 100,
+            y: -10,
+            size: Math.random() * 10 + 5,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+            rotation: Math.random() * 360
+          }));
+          setConfetti(newConfetti);
+          
+          // 动画彩屑下落
+          const interval = setInterval(() => {
+            setConfetti(prev => prev.map(piece => ({
+              ...piece,
+              y: piece.y + 2,
+              rotation: piece.rotation + 5
+            })).filter(piece => piece.y < 110));
+          }, 30);
+          
+          return () => clearInterval(interval);
+        }
+      }, [showPrize]);
+      
+      // 抽奖逻辑
+      const spinWheel = () => {
+        if (isSpinning) return;
+        
+        setIsSpinning(true);
+        setShowPrize(false);
+        setSelectedPrize(null);
+        
+        // 模拟抽奖过程
+        setTimeout(() => {
+          // 获取未抽中的奖品
+          const remainingPrizes = prizes.filter(prize => 
+            !wonPrizes.some(won => won.id === prize.id)
+          );
+          
+          // 如果所有奖品都已抽中
+          if (remainingPrizes.length === 0) {
+            toast.info('恭喜你获得了所有礼物！', { duration: 3000 });
+            setIsSpinning(false);
+            return;
+          }
+          
+          // 随机选择奖品，稀有奖品概率较低
+          const weightedPrizes = remainingPrizes.flatMap(prize => {
+            const weight = {
+              common: 40,
+              uncommon: 30,
+              rare: 18,
+              epic: 10,
+              legendary: 2
+            }[prize.rarity] || 1;
+            
+            return Array(weight).fill(prize);
+          });
+          
+          const randomPrize = weightedPrizes[Math.floor(Math.random() * weightedPrizes.length)];
+          setSelectedPrize(randomPrize);
+          
+          // 显示结果
+          setTimeout(() => {
+            setShowPrize(true);
+            setIsSpinning(false);
+            setWonPrizes(prev => [...prev, randomPrize]);
+            toast.success(`恭喜获得: ${randomPrize.name}!`, { duration: 3000 });
+          }, 1500);
+        }, 2000);
+      };
+      
+      return (
+        <div className="w-full max-w-md mx-auto p-4">
+          {/* 生日标题 */}
+          <div className="text-center mb-8">
+             <h1 className="text-[clamp(2rem,5vw,3.5rem)] font-bold text-[#f1c40f] drop-shadow-md mb-2">
+              生日快乐!
+            </h1>
+             <p className="text-[#2c3e50] dark:text-gray-200 text-lg">点击下方按钮抽取你的生日惊喜</p>
+          </div>
+          
+          {/* 彩屑效果 */}
+          {showPrize && confetti.map((piece, index) => (
+            <div
+              key={index}
+              className="fixed pointer-events-none"
+              style={{
+                left: `${piece.x}%`,
+                top: `${piece.y}%`,
+                width: `${piece.size}px`,
+                height: `${piece.size}px`,
+                backgroundColor: piece.color,
+                transform: `rotate(${piece.rotation}deg)`,
+                borderRadius: Math.random() > 0.5 ? '50%' : '0',
+                opacity: 0.7
+              }}
+            />
+          ))}
+          
+          {/* 抽奖区域 */}
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8 overflow-hidden border border-pink-100 dark:border-purple-900">
+            {/* 装饰元素 */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-pink-200 dark:bg-purple-900/30 rounded-full blur-2xl opacity-50"></div>
+            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-200 dark:bg-blue-900/30 rounded-full blur-2xl opacity-50"></div>
+            
+            {/* 抽奖结果显示 */}
+            <div className="relative z-10">
+              {!showPrize ? (
+                <div className="text-center py-12">
+                  <div className="w-40 h-40 mx-auto mb-6 relative">
+                    <div className={`w-full h-full rounded-full border-8 border-dashed ${isSpinning ? 'border-pink-500 animate-spin' : 'border-gray-300 dark:border-gray-600'}`}></div>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-5xl">
+                      <i className="fa fa-gift"></i>
+                    </div>
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">准备好抽取你的礼物了吗？</p>
+                </div>
+              ) : (
+                <AnimatePresence>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="text-center"
+                  >
+                    <div className="w-48 h-48 mx-auto mb-4 rounded-xl overflow-hidden border-4 border-white shadow-lg">
+                      <img 
+                        src={selectedPrize?.image || ''} 
+                        alt={selectedPrize?.name || 'Prize'} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                     <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">{selectedPrize?.name}</h3>
+                     <p className="text-gray-600 dark:text-gray-300 italic mb-4">"{selectedPrize?.description}"</p>
+                  </motion.div>
+                </AnimatePresence>
+              )}
+              
+              {/* 抽奖按钮 */}
+              <motion.button
+                onClick={spinWheel}
+                disabled={isSpinning}
+                whileHover={!isSpinning ? { scale: 1.05 } : undefined}
+                whileTap={!isSpinning ? { scale: 0.95 } : undefined}
+                className={`w-full py-4 mt-6 rounded-full text-white font-bold text-lg shadow-lg transition-all duration-300 ${
+                  isSpinning 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-[#f1c40f] to-[#f39c12] hover:from-[#f39c12] hover:to-[#f1c40f]'
+                }`}
+              >
+                {isSpinning ? (
+                  <>
+                    <i className="fa fa-spinner fa-spin mr-2"></i> 抽奖中...
+                  </>
+                ) : showPrize ? (
+                  <>再抽一次 <i className="fa fa-arrow-right ml-2"></i></>
+                ) : (
+                  wonPrizes.length >= prizes.length ? (
+                    <>已获得所有礼物</>
+                  ) : (
+                    <>开始抽奖 <i className="fa fa-gift ml-2"></i></>
+                  )
+                )}
+              </motion.button>
+            </div>
+          </div>
+          
+          {/* 已获得奖品列表 */}
+          {wonPrizes.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center">
+                <i className="fa fa-list-check mr-2 text-pink-500"></i> 已获得的奖品
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {wonPrizes.map((prize, index) => (
+                  <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 flex items-center">
+                    <div className="w-12 h-12 rounded-md overflow-hidden mr-2 flex-shrink-0">
+                      <img src={prize.image} alt={prize.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                     <h4 className="font-medium text-sm text-gray-800 dark:text-white truncate">{prize.name}</h4>
+                     <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{prize.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+    
+    // 主页组件
+    const Home = () => {
+      const { motion } = framerMotion;
+      
+      return (
+       <div className="min-h-screen bg-[#d6eaf8] dark:bg-[#1a2a3a] py-8 px-4">
+          {/* 背景装饰 */}
+          <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <motion.div 
+               className="absolute top-10 left-10 w-40 h-40 bg-[#e84393]/30 dark:bg-[#e84393]/20 rounded-full blur-3xl"
+              animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [0.5, 0.7, 0.5]
+              }}
+              transition={{ 
+                duration: 10,
+                repeat: Infinity
+              }}
+            ></motion.div>
+            <motion.div 
+               className="absolute bottom-10 right-10 w-60 h-60 bg-[#3498db]/30 dark:bg-[#3498db]/20 rounded-full blur-3xl"
+              animate={{ 
+                scale: [1, 1.3, 1],
+                opacity: [0.5, 0.8, 0.5]
+              }}
+              transition={{ 
+                duration: 12,
+                repeat: Infinity,
+                delay: 2
+              }}
+            ></motion.div>
+            <motion.div 
+               className="absolute top-1/3 right-1/4 w-32 h-32 bg-[#f39c12]/30 dark:bg-[#f39c12]/20 rounded-full blur-3xl"
+              animate={{ 
+                scale: [1, 1.1, 1],
+                opacity: [0.4, 0.6, 0.4]
+              }}
+              transition={{ 
+                duration: 15,
+                repeat: Infinity,
+                delay: 5
+              }}
+            ></motion.div>
+          </div>
+          
+          {/* 页面内容 */}
+          <div className="relative z-10 max-w-4xl mx-auto">
+            <Lottery />
+            
+            {/* 生日祝福 */}
+             <div className="text-center mt-12 p-6 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-white/30 dark:border-gray-700/30">
+               <h2 className="text-2xl font-bold text-[#f1c40f] drop-shadow-md mb-2">祝你生日快乐！</h2>
+              <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">
+                希望这个特别的日子充满欢笑和惊喜，愿所有美好的祝福都围绕着你！
+              </p>
+              <div className="mt-4 flex justify-center space-x-2">
+                <i className="fa fa-birthday-cake text-pink-500 text-2xl"></i>
+                <i className="fa fa-gift text-purple-500 text-2xl"></i>
+                <i className="fa fa-confetti text-yellow-500 text-2xl"></i>
+                <i className="fa fa-balloon text-blue-500 text-2xl"></i>
+                <i className="fa fa-candle text-red-500 text-2xl"></i>
+               </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+    
+    // 应用入口
+    const App = () => {
+      return (
+        <div>
+          <Home />
+          <sonner.Toaster position="top-center" />
+        </div>
+      );
+    };
+    
+    // 渲染应用
+    ReactDOM.createRoot(document.getElementById('root')).render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  </script>
+  
+  <!-- Babel用于转换JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</body>
+</html>
